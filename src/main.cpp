@@ -14,8 +14,11 @@
 #define RX_PIN 12 // к пину TX на DFP
 #define TX_PIN 11 // к пину RX на DFP
 
+// Пин для определения статуса DFP
+#define BUSY_PIN 2
+
 // Пины для сэмплов
-#define KEYBOARD_INIT_PIN 4
+#define KEYBOARD_INIT_PIN 9
 #define KEYBOARD_LAST_PIN 10
 
 #ifdef DEBUG
@@ -30,6 +33,18 @@ DFRobotDFPlayerMini myDFPlayer;
 int trackDiff = KEYBOARD_INIT_PIN - 1;
 int currentRecord;
 
+// low means playing, high means no playing
+inline bool isPlaying()
+{
+  return !digitalRead(BUSY_PIN);
+}
+
+// low means playing, high means no playing
+inline bool notPlaying()
+{
+  return digitalRead(BUSY_PIN);
+}
+
 void setup()
 {
   dfplayerSerial.begin(9600);
@@ -37,7 +52,9 @@ void setup()
   Serial.begin(9600);
 #endif
 
-  for (byte pin = KEYBOARD_INIT_PIN; pin <= KEYBOARD_LAST_PIN; pin++) {
+  pinMode(BUSY_PIN, INPUT);
+  for (byte pin = KEYBOARD_INIT_PIN; pin <= KEYBOARD_LAST_PIN; pin++)
+  {
     pinMode(pin, INPUT);
   }
 
@@ -69,14 +86,28 @@ void setup()
 void loop()
 {
   currentRecord = -1;
-  for (byte button = KEYBOARD_INIT_PIN; button <= KEYBOARD_LAST_PIN; button++) {
-    if (digitalRead(button)) {
+  for (byte button = KEYBOARD_INIT_PIN; button <= KEYBOARD_LAST_PIN; button++)
+  {
+    if (digitalRead(button))
+    {
       currentRecord = button - trackDiff;
+      debug("Button " + String(button) + " pressed");
     }
   }
-  if (currentRecord > -1) {    
-    myDFPlayer.play(currentRecord);
-  } else {
-    myDFPlayer.pause();
+  if (currentRecord > -1)
+  {
+    if (notPlaying())
+    {
+      debug("Playing record " + String(currentRecord));
+      myDFPlayer.play(currentRecord);
+    }
+  }
+  else
+  {
+    if (isPlaying())
+    {
+      debug("Pause");
+      myDFPlayer.stop();
+    }
   }
 }
