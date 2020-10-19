@@ -1,6 +1,5 @@
 #include <Arduino.h>
 
-#include <SoftwareSerial.h>
 #include <DFRobotDFPlayerMini.h>
 
 // TODO закомментировать эту строку перед заливкой на
@@ -10,9 +9,11 @@
 // Светодиод успешного запуска
 #define HEALTH_CHECK_LED 13
 
-// Пины для общения с DFPlayer
+#ifdef DEBUG
+// Пины для общения с DFPlayer в отладочном режиме
 #define RX_PIN 12 // к пину TX на DFP
 #define TX_PIN 11 // к пину RX на DFP
+#endif
 
 // Пин для определения статуса DFP
 #define BUSY_PIN 2
@@ -27,7 +28,13 @@
 #define debug(msg)
 #endif
 
+#ifdef DEGUG
+#include <SoftwareSerial.h>
 SoftwareSerial dfplayerSerial(RX_PIN, TX_PIN);
+#else
+#define dfplayerSerial Serial
+#endif
+
 DFRobotDFPlayerMini myDFPlayer;
 
 int trackDiff = KEYBOARD_INIT_PIN - 1;
@@ -47,10 +54,10 @@ inline bool notPlaying()
 
 void setup()
 {
-  dfplayerSerial.begin(9600);
 #ifdef DEBUG
-  Serial.begin(9600);
+  dfplayerSerial.begin(9600);
 #endif
+  Serial.begin(9600);
 
   pinMode(BUSY_PIN, INPUT);
   for (byte pin = KEYBOARD_INIT_PIN; pin <= KEYBOARD_LAST_PIN; pin++)
